@@ -124,6 +124,8 @@ func (r *Repo) Query(opts *QueryOpts) ([]*api.Proposal, error) {
 
 	logrus.Debugf("all KEPs collected: %+v", allKEPs)
 
+	logrus.Infof("Filtering %v results using query criteria...", len(allKEPs))
+
 	// filter the KEPs by criteria
 	allowedStatus := sliceToMap(opts.Status)
 	allowedStage := sliceToMap(opts.Stage)
@@ -133,9 +135,9 @@ func (r *Repo) Query(opts *QueryOpts) ([]*api.Proposal, error) {
 	allowedParticipant := sliceToMap(opts.Participant)
 
 	results := make([]*api.Proposal, 0, 10)
-	for _, k := range allKEPs {
+	for i, k := range allKEPs {
 		if k == nil {
-			return nil, errors.New("one of the KEPs in query was nil")
+			return nil, fmt.Errorf("query result #%v was nil", i)
 		}
 
 		logrus.Debugf("current KEP: %v", k)

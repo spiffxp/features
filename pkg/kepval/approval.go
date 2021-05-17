@@ -36,7 +36,7 @@ func ValidatePRR(kep *api.Proposal, h *api.PRRHandler, prrDir string) error {
 	}
 
 	if !requiredPRRApproval {
-		logrus.Debugf("PRR review is not required for %s", kep.Number)
+		logrus.Debugf("PRR review is not required for kep: %s", kep.Number)
 		return nil
 	}
 
@@ -47,7 +47,7 @@ func ValidatePRR(kep *api.Proposal, h *api.PRRHandler, prrDir string) error {
 		prrFilename,
 	)
 
-	logrus.Infof("PRR file: %s", prrFilepath)
+	logrus.Infof("Reading PRR file: %s", prrFilepath)
 
 	prrFile, err := os.Open(prrFilepath)
 	if os.IsNotExist(err) {
