@@ -17,7 +17,6 @@ limitations under the License.
 package repo
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,18 +30,17 @@ import (
 func (r *Repo) WriteKEP(kep *api.Proposal) error {
 	b, err := yaml.Marshal(kep)
 	if err != nil {
-		return fmt.Errorf("KEP is invalid: %s", err)
+		return fmt.Errorf("could not convert KEP metadta to YAML: %w", err)
 	}
 
 	sig := kep.OwningSIG
-	kepName := kep.Name
-
 	if sig == "" {
-		return errors.New("owning SIG must be populated")
+		return fmt.Errorf("invalid KEP, owning-sig must be populated: %v", kep)
 	}
 
+	kepName := kep.Name
 	if kepName == "" {
-		return errors.New("KEP name must be populated")
+		return fmt.Errorf("invalid KEP, name must be populated: %v", kep)
 	}
 
 	kepPath := filepath.Join(r.ProposalPath, sig, kepName)

@@ -72,7 +72,7 @@ func ValidatePRR(kep *api.Proposal, h *api.PRRHandler, prrDir string) error {
 
 	stagePRRApprover, err := prr.ApproverForStage(kep.Stage)
 	if err != nil {
-		return errors.Wrapf(err, "getting PRR approver for %s stage", kep.Stage)
+		return fmt.Errorf("unable to get PRR Approver for kep %v at stage %v: %w", kep.Name, kep.Stage, err)
 	}
 
 	if stagePRRApprover == "" {
