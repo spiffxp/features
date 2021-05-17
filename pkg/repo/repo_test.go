@@ -18,13 +18,11 @@ package repo_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 
 	"k8s.io/enhancements/api"
 	"k8s.io/enhancements/pkg/repo"
@@ -87,14 +85,10 @@ func TestProposalValidate(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			b, err := ioutil.ReadFile(tc.file)
+			p, err := parser.Load(tc.file)
 			require.NoError(t, err)
 
-			var p api.Proposal
-			err = yaml.Unmarshal(b, &p)
-			require.NoError(t, err)
-
-			errs := parser.Validate(&p)
+			errs := parser.Validate(p)
 			if tc.expectErrors {
 				require.NotEmpty(t, errs)
 			}

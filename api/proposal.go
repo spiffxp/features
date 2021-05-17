@@ -22,6 +22,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -85,6 +86,22 @@ func (p *Proposal) IsMissingStage() bool {
 }
 
 type KEPHandler Parser
+
+// Load loads and parses a Proposal from the given filename
+func (k *KEPHandler) Load(filename string) (*Proposal, error) {
+	kepFile, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("could not open file %s: %w", filename, err)
+	}
+	defer kepFile.Close()
+
+	kep, err := k.Parse(kepFile)
+	if err != nil {
+		return nil, fmt.Errorf("coud not parse KEP from file %s: %w", filename, err)
+	}
+	kep.Filename = filename
+	return kep, nil
+}
 
 // TODO(api): Make this a generic parser for all `Document` types
 func (k *KEPHandler) Parse(in io.Reader) (*Proposal, error) {

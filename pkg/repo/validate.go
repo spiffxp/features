@@ -118,19 +118,13 @@ func (e fatalValidationError) Unwrap() error { return e.Err }
 // validateFile runs a validation and returns an error if validation fails.
 // fatalValidationError will be returned if further parsing should be stopped.
 func validateFile(r *Repo, prrDir, filename string) error {
-	kepFile, err := os.Open(filename)
-	if err != nil {
-		return &fatalValidationError{Err: errors.Wrapf(err, "could not open file %s", filename)}
-	}
-	defer kepFile.Close()
-
-	logrus.Infof("parsing %s", filename)
 	kepHandler, prrHandler := r.KEPHandler, r.PRRHandler
-	kep, kepParseErr := kepHandler.Parse(kepFile)
-	if kepParseErr != nil {
-		return errors.Wrap(kepParseErr, "parsing KEP file")
+
+	logrus.Infof("loading %s", filename)
+	kep, err := kepHandler.Load(filename)
+	if err != nil {
+		return &fatalValidationError{Err: errors.Wrapf(err, "could not load KEP from file %s", filename)}
 	}
-	kep.Filename = filename
 
 	// TODO: This shouldn't be required once we push the errors into the
 	//       parser struct
