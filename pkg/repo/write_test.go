@@ -27,7 +27,6 @@ import (
 
 	"k8s.io/enhancements/api"
 	"k8s.io/enhancements/pkg/repo"
-	"sigs.k8s.io/yaml"
 )
 
 // TODO: Consider using afero to mock the filesystem here
@@ -35,7 +34,6 @@ func TestWriteKep(t *testing.T) {
 	testcases := []struct {
 		name         string
 		kepFile      string
-		repoPath     string
 		kepName      string
 		sig          string
 		expectedPath string
@@ -44,7 +42,6 @@ func TestWriteKep(t *testing.T) {
 		{
 			name:         "simple KEP",
 			kepFile:      "valid-kep.yaml",
-			repoPath:     "enhancements",
 			kepName:      "1010-test",
 			sig:          "sig-auth",
 			expectedPath: filepath.Join("enhancements", "keps", "sig-auth", "1010-test"),
@@ -53,7 +50,6 @@ func TestWriteKep(t *testing.T) {
 		{
 			name:         "missing KEP name",
 			kepFile:      "valid-kep.yaml",
-			repoPath:     "enhancements",
 			sig:          "sig-auth",
 			expectedPath: filepath.Join("enhancements", "keps", "sig-auth", "1010-test"),
 			expectError:  true,
@@ -61,47 +57,26 @@ func TestWriteKep(t *testing.T) {
 		{
 			name:         "missing owning SIG",
 			kepFile:      "valid-kep.yaml",
-			repoPath:     "enhancements",
 			kepName:      "1010-test",
 			expectedPath: filepath.Join("enhancements", "keps", "sig-auth", "1010-test"),
 			expectError:  true,
 		},
+		/* TODO: this needs repo.Validate() to call repo.KEPHandler.Validate(kep)
+		{
+			name:         "unknown SIG",
+			kepFile:      "valid-kep.yaml",
+			sig:          "sig-does-not-exist",
+			kepName:      "1010-test",
+			expectedPath: filepath.Join("enhancements", "keps", "sig-does-not-exist", "1010-test"),
+			expectError:  false,
+		},
+		*/
 	}
 
+	tcRepoPath := "enhancements"
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			tempDir, err := ioutil.TempDir("", "")
-			mkErr := os.MkdirAll(
-				filepath.Join(
-					tempDir,
-					tc.repoPath,
-					repo.ProposalPathStub,
-					repo.PRRApprovalPathStub,
-				),
-				os.ModePerm,
-			)
-
-			require.Nil(t, mkErr)
-
-			templatePath := filepath.Join(
-				tempDir,
-				tc.repoPath,
-				repo.ProposalPathStub,
-				repo.ProposalTemplatePathStub,
-			)
-
-			mkErr = os.MkdirAll(
-				templatePath,
-				os.ModePerm,
-			)
-
-			require.Nil(t, mkErr)
-
-			templateFile := filepath.Join(templatePath, repo.ProposalFilename)
-			emptyTemplate, fileErr := os.Create(templateFile)
-			require.Nil(t, fileErr)
-			emptyTemplate.Close()
-
 			defer func() {
 				t.Logf("cleanup!")
 				err := os.RemoveAll(tempDir)
@@ -109,30 +84,38 @@ func TestWriteKep(t *testing.T) {
 					t.Logf("error cleaning up test: %s", err)
 				}
 			}()
-
 			require.NoError(t, err)
 
-			repoPath := tc.repoPath
-			repoPath = filepath.Join(tempDir, repoPath)
-
+			repoPath := filepath.Join(tempDir, tcRepoPath)
+			kepsPath := filepath.Join(repoPath, repo.ProposalPathStub)
+			prrsPath := filepath.Join(kepsPath, repo.PRRApprovalPathStub)
+			templatePath := filepath.Join(kepsPath, repo.ProposalTemplatePathStub)
+			templateFile := filepath.Join(templatePath, repo.ProposalFilename)
 			proposalReadme := filepath.Join(repoPath, repo.ProposalPathStub, "README.md")
+
+			mkErr := os.MkdirAll(prrsPath, os.ModePerm)
+			require.Nil(t, mkErr)
+
+			mkErr = os.MkdirAll(templatePath, os.ModePerm)
+			require.Nil(t, mkErr)
+
+			emptyTemplate, fileErr := os.Create(templateFile)
+			require.Nil(t, fileErr)
+			emptyTemplate.Close()
+
 			emptyReadme, fileErr := os.Create(proposalReadme)
 			require.Nil(t, fileErr)
 			emptyReadme.Close()
 
 			c := newTestClient(t, repoPath)
 
-			b, err := ioutil.ReadFile(filepath.Join("testdata", tc.kepFile))
-			require.NoError(t, err)
-
-			var p api.Proposal
-			err = yaml.Unmarshal(b, &p)
+			p, err := c.r.KEPHandler.Load(filepath.Join("testdata", tc.kepFile))
 			require.NoError(t, err)
 
 			p.OwningSIG = tc.sig
 			p.Name = tc.kepName
 
-			err = c.r.WriteKEP(&p)
+			err = c.r.WriteKEP(p)
 
 			files, readErr := ioutil.ReadDir(c.r.ProposalPath)
 			require.Nil(t, readErr)
