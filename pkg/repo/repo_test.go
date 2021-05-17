@@ -70,12 +70,12 @@ func TestProposalValidate(t *testing.T) {
 	}{
 		{
 			name:         "valid KEP passes validate",
-			file:         "testdata/valid-kep.yaml",
+			file:         "valid-kep.yaml",
 			expectErrors: false,
 		},
 		{
 			name:         "invalid KEP fails validate for owning-sig",
-			file:         "testdata/invalid-kep.yaml",
+			file:         "invalid-kep.yaml",
 			expectErrors: true,
 		},
 	}
@@ -85,7 +85,7 @@ func TestProposalValidate(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			p, err := parser.Load(tc.file)
+			p, err := parser.Load(filepath.Join("testdata", tc.file))
 			require.NoError(t, err)
 
 			errs := parser.Validate(p)

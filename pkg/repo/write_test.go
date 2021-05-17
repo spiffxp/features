@@ -43,7 +43,7 @@ func TestWriteKep(t *testing.T) {
 	}{
 		{
 			name:         "simple KEP",
-			kepFile:      "testdata/valid-kep.yaml",
+			kepFile:      "valid-kep.yaml",
 			repoPath:     "enhancements",
 			kepName:      "1010-test",
 			sig:          "sig-auth",
@@ -52,7 +52,7 @@ func TestWriteKep(t *testing.T) {
 		},
 		{
 			name:         "missing KEP name",
-			kepFile:      "testdata/valid-kep.yaml",
+			kepFile:      "valid-kep.yaml",
 			repoPath:     "enhancements",
 			sig:          "sig-auth",
 			expectedPath: filepath.Join("enhancements", "keps", "sig-auth", "1010-test"),
@@ -60,7 +60,7 @@ func TestWriteKep(t *testing.T) {
 		},
 		{
 			name:         "missing owning SIG",
-			kepFile:      "testdata/valid-kep.yaml",
+			kepFile:      "valid-kep.yaml",
 			repoPath:     "enhancements",
 			kepName:      "1010-test",
 			expectedPath: filepath.Join("enhancements", "keps", "sig-auth", "1010-test"),
@@ -122,7 +122,7 @@ func TestWriteKep(t *testing.T) {
 
 			c := newTestClient(t, repoPath)
 
-			b, err := ioutil.ReadFile(tc.kepFile)
+			b, err := ioutil.ReadFile(filepath.Join("testdata", tc.kepFile))
 			require.NoError(t, err)
 
 			var p api.Proposal
